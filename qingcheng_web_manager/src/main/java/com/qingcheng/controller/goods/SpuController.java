@@ -3,6 +3,7 @@ package com.qingcheng.controller.goods;
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.qingcheng.entity.PageResult;
 import com.qingcheng.entity.Result;
+import com.qingcheng.pojo.goods.Goods;
 import com.qingcheng.pojo.goods.Spu;
 import com.qingcheng.service.goods.SpuService;
 import org.springframework.web.bind.annotation.*;
@@ -59,5 +60,41 @@ public class SpuController {
         spuService.delete(id);
         return new Result();
     }
+
+    @PostMapping("/save")
+    public Result save(@RequestBody Goods goods){
+        spuService.saveGoods(goods);
+        return new Result();
+    }
+
+    @GetMapping("/findGoodsById")
+    public Goods findGoodsById(String id){
+        return spuService.findGoodsById(id);
+    }
+
+    @PostMapping("/audit")
+    public Result audit(@RequestBody Map<String,String> map){
+        spuService.audit(map.get("id"),map.get("status"),map.get("message"));
+        return new Result();
+    }
+
+    @GetMapping("/pull")
+    public Result pull(String id){
+        spuService.pull(id);
+        return new Result();
+    }
+
+    @GetMapping("/put")
+    public Result put(String id){
+        spuService.put(id);
+        return new Result();
+    }
+
+    @GetMapping("/putMany")
+    public Result putMany(String[] ids){
+        int i = spuService.putMany(ids);
+        return new Result(0,"上架"+i+"个商品");
+    }
+
 
 }
