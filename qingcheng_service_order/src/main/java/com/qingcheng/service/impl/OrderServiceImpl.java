@@ -2,13 +2,19 @@ package com.qingcheng.service.impl;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.qingcheng.dao.OrderConfigMapper;
+import com.qingcheng.dao.OrderItemMapper;
+import com.qingcheng.dao.OrderLogMapper;
 import com.qingcheng.dao.OrderMapper;
 import com.qingcheng.entity.PageResult;
-import com.qingcheng.pojo.order.Order;
+import com.qingcheng.pojo.order.*;
 import com.qingcheng.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +23,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderMapper orderMapper;
+    @Autowired
+    private OrderItemMapper orderItemMapper;
+    @Autowired
+    private OrderConfigMapper orderConfigMapper;
+    @Autowired
+    private OrderLogMapper orderLogMapper;
 
     /**
      * 返回全部记录
@@ -95,6 +107,68 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.deleteByPrimaryKey(id);
     }
 
+    public Orders findOrdersById(String id) {
+        Orders orders = new Orders();
+        orders.setOrder(orderMapper.selectByPrimaryKey(id));
+        Example example = new Example(OrderItem.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("orderId",id);
+        orders.setOrderItems(orderItemMapper.selectByExample(example));
+        return orders;
+    }
+
+    public void batchSend(List<Order> orders) {
+        //判断运单号和物流公司是否为空
+        for (Order order:orders){
+            if (order.getShippingCode()==null||order.getShippingName()==null){
+                throw new RuntimeException("请选择快递公司和填写快递单号");
+            }
+        }
+        //循环订单
+        for(Order order:orders){
+            order.setOrderStatus("3");//订单状态  已发货
+            order.setConsignStatus("2");//发货状态  已发货
+            order.setConsignTime(new Date());//发货时间
+            orderMapper.updateByPrimaryKeySelective(order);
+            //记录订单日志  。。。（代码略）
+        }
+    }
+
+    /**
+     * 订单超时处理
+     */
+    public void orderTimeOutLogic() {
+        //订单超时未付款 自动关闭
+        //查询超时时间
+        OrderConfig orderConfig = orderConfigMapper.selectByPrimaryKey(1);
+        Integer orderTimeout = orderConfig.getOrderTimeout();//超时时间（分）60
+        LocalDateTime localDateTime = LocalDateTime.now().minusMinutes(orderTimeout);//得到超时的时间点
+        //设置查询条件
+        Example example=new Example(Order.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andLessThan("createTime",localDateTime);//创建时间点小于超时时间点
+        criteria.andEqualTo("orderStatus","0");//未付款的
+        criteria.andEqualTo("isDelete","0");//未删除的
+        //查询超时订单
+        List<Order> orders = orderMapper.selectByExample(example);
+        for(Order order :orders){
+            //记录订单变动日志
+            OrderLog orderLog=new OrderLog();
+            orderLog.setOperater("system");// 系统
+            orderLog.setOperateTime(new Date());//当前日期
+            orderLog.setOrderStatus("4");
+            orderLog.setPayStatus(order.getPayStatus());
+            orderLog.setConsignStatus(order.getConsignStatus());
+            orderLog.setRemarks("超时订单，系统自动关闭");
+            orderLog.setOrderId(Long.valueOf(order.getId()));
+            orderLogMapper.insert(orderLog);
+            //更改订单状态
+            order.setOrderStatus("4");
+            order.setCloseTime(new Date());//关闭日期
+            orderMapper.updateByPrimaryKeySelective(order);
+        }
+    }
+
     /**
      * 构建查询条件
      * @param searchMap
@@ -104,6 +178,9 @@ public class OrderServiceImpl implements OrderService {
         Example example=new Example(Order.class);
         Example.Criteria criteria = example.createCriteria();
         if(searchMap!=null){
+            if(searchMap.get("ids")!=null){
+                criteria.andIn("id",Arrays.asList((String[])searchMap.get("ids")));
+            }
             // 订单id
             if(searchMap.get("id")!=null && !"".equals(searchMap.get("id"))){
                 criteria.andLike("id","%"+searchMap.get("id")+"%");

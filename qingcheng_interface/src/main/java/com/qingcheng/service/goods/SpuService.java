@@ -44,9 +44,8 @@ public interface SpuService {
     public void put(String id);
 
     public int putMany(String[] ids);
-//
-//    //批量下架
-//    public int pullMany(String[] ids);
+    //批量下架
+    public int pullMany(String[] ids);
 //    //删除和还原商品，逻辑删除，真实删除
 }
 

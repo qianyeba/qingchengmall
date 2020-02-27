@@ -242,6 +242,7 @@ public class SpuServiceImpl implements SpuService {
     public int putMany(String[] ids) {
         //修改
         Spu spu = new Spu();
+        spu.setIsMarketable("1");
         Example example = new Example(Spu.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andIn("id", Arrays.asList(ids));
@@ -251,6 +252,21 @@ public class SpuServiceImpl implements SpuService {
         //日志
 
         return i;
+    }
+
+    /**
+     * 批量下架
+     * @param ids
+     * @return
+     */
+    public int pullMany(String[] ids) {
+        Spu spu = new Spu();
+        spu.setIsMarketable("0");
+        Example example = new Example(Spu.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andIn("id", Arrays.asList(ids));
+        criteria.andEqualTo("isMarketable","1");//上架的
+        return spuMapper.updateByExampleSelective(spu,example);
     }
 
     /**

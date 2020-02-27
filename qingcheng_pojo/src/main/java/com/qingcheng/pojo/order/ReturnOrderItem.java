@@ -13,9 +13,6 @@ public class ReturnOrderItem implements Serializable{
 	@Id
 	private Long id;//ID
 
-
-	
-
 	private Long categoryId;//分类ID
 
 	private Long spuId;//SPU_ID

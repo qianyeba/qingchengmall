@@ -96,5 +96,11 @@ public class SpuController {
         return new Result(0,"上架"+i+"个商品");
     }
 
+    @GetMapping("/pullMany")
+    public Result pullMany(String[] ids){
+        int i = spuService.pullMany(ids);
+        return new Result(0,"下架"+i+"个商品");
+    }
+
 
 }
