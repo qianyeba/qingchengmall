@@ -9,6 +9,8 @@ import com.qingcheng.service.system.MenuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +97,29 @@ public class MenuServiceImpl implements MenuService {
         menuMapper.deleteByPrimaryKey(id);
     }
 
+    public List<Map> findAllMenu() {
+         //方法1：首先按照条件查询上级菜单id为0的列表（1级菜单），循环到得每个一级菜单id，查询二级菜单，嵌套循环到得每个二级菜单id,查询三级菜单
+        //不推荐方式1：因为和数据库频繁交互，交互方式=1+一级菜单数量+二级菜单数量
+        //方式2：首先把符合条件的菜单查询出来（列表），通过内存判断筛选出符合条件的记录（每一级的菜单列表）
+        List<Menu> menuList = findAll();
+        return findMenuListByParentId(menuList,"0");
+    }
+
+    private List<Map> findMenuListByParentId(List<Menu> menuList,String parentId){
+        List<Map> mapList = new ArrayList<Map>();
+        for (Menu menu:menuList){
+            if(menu.getParentId().equals(parentId)){
+                Map map=new HashMap();
+                map.put("paht",menu.getId());
+                map.put("title",menu.getName());
+                map.put("icon",menu.getIcon());
+                map.put("linkUrl",menu.getUrl());
+                map.put("children",findMenuListByParentId(menuList,menu.getId()));
+                mapList.add(map);
+            }
+        }
+        return mapList;
+    }
     /**
      * 构建查询条件
      * @param searchMap
