@@ -9,15 +9,13 @@ import com.qingcheng.dao.SkuMapper;
 import com.qingcheng.dao.SpuMapper;
 import com.qingcheng.entity.PageResult;
 import com.qingcheng.pojo.goods.*;
+import com.qingcheng.service.goods.SkuService;
 import com.qingcheng.service.goods.SpuService;
 import com.qingcheng.util.IdWorker;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service(interfaceClass = SpuService.class)
 public class SpuServiceImpl implements SpuService {
@@ -32,6 +30,8 @@ public class SpuServiceImpl implements SpuService {
     private CategoryMapper categoryMapper;
     @Autowired
     private CategoryBrandMapper categoryBrandMapper;
+    @Autowired
+    private SkuService skuService;
     /**
      * 返回全部记录
      * @return
@@ -101,12 +101,23 @@ public class SpuServiceImpl implements SpuService {
         spuMapper.updateByPrimaryKeySelective(spu);
     }
 
+
     /**
      *  删除
      * @param id
      */
     public void delete(String id) {
-        spuMapper.deleteByPrimaryKey(id);
+
+//        删除缓存的价格
+        Map map = new HashMap();
+        map.put("spuId",id);
+        List<Sku> list = skuService.findList(map);
+        for (Sku sku:list){
+            skuService.deletePriceFromRedis(sku.getId());
+        }
+
+        spuMapper.deleteByPrimaryKey(id);//学员实现逻辑删除
+        //sku列表删除
     }
 
     /**
@@ -157,6 +168,9 @@ public class SpuServiceImpl implements SpuService {
             sku.setCommentNum(0);
             sku.setSaleNum(0);
             skuMapper.insert(sku);
+            //重新将价格更新到缓存
+            skuService.savePriceToRedisById(sku.getId(),sku.getPrice());
+
         }
         //建立分类和品牌关联
         CategoryBrand categoryBrand = new CategoryBrand();

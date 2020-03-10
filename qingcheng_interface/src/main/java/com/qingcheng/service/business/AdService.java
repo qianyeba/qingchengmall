@@ -32,4 +32,14 @@ public interface AdService {
 
     public void delete(Integer id);
 
+    /**
+     * 根据广告位置查询广告列表
+     * @param position
+     * @return
+     */
+    public Object findByPosition(String position);
+
+    public void saveAdToRedisByPosition(String position);
+
+    public void saveAllAdToRedis();
 }

@@ -117,7 +117,6 @@ public class AlbumServiceImpl implements AlbumService {
                 criteria.andLike("imageItems","%"+searchMap.get("imageItems")+"%");
             }
 
-
         }
         return example;
     }

@@ -26,10 +26,15 @@ public interface SkuService {
 
     public void add(Sku sku);
 
-
     public void update(Sku sku);
-
 
     public void delete(String id);
 
+    public void saveAllPriceToRedis();
+
+    public Integer findPrice(String id);
+
+    public void savePriceToRedisById(String id,Integer price);
+
+    public void deletePriceFromRedis(String id);
 }

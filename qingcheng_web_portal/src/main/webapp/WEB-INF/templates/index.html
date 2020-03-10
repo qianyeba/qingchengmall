@@ -82,11 +82,11 @@
 						</div>
 						<div class="yui3-u Rit searchArea">
 							<div class="search">
-								<form action="" class="sui-form form-inline">
+								<form action="/search.do" class="sui-form form-inline">
 									<!--searchAutoComplete-->
 									<div class="input-append">
-										<input type="text" id="autocomplete" class="input-error input-xxlarge" />
-										<button class="sui-btn btn-xlarge btn-danger" type="button">搜索</button>
+										<input type="text" name="keywords" id="autocomplete" class="input-error input-xxlarge" />
+										<button class="sui-btn btn-xlarge btn-danger">搜索</button>
 									</div>
 								</form>
 							</div>
@@ -118,7 +118,7 @@
 									<div class="subitem">
 										<dl class="fore" th:each="category2:${category1.menus}">
 											<dt>
-												<a href="" th:text="${category2.name}"></a>
+												<a href=""  th:text="${category2.name}"></a>
 											</dt>
 											<dd>
 												<em th:each="category3:${category2.menus}">
@@ -129,6 +129,7 @@
 									</div>
 								</div>
 							</div>
+
 						</div>
 					</div>
 				</div>
@@ -158,27 +159,14 @@
 				<!--banner轮播-->
 				<div id="myCarousel" data-ride="carousel" data-interval="4000" class="sui-carousel slide">
 					<ol class="carousel-indicators">
-						<li data-target="#myCarousel" th:data-slide-to="${iterStat,index}" th:class="${iterStat.index==0?'active':''}" th:each="ad,iterStat:${lbt}"></li>
-<!--						<li data-target="#myCarousel" data-slide-to="0" class="active"></li>-->
-<!--						<li data-target="#myCarousel" data-slide-to="1"></li>-->
-<!--						<li data-target="#myCarousel" data-slide-to="2"></li>-->
+						<li data-target="#myCarousel" th:data-slide-to="${iterStat.index}" th:class="${iterStat.index==0?'active':''}" th:each="ad,iterStat:${lbt}"></li>
 					</ol>
 					<div class="carousel-inner">
-						<div class="${iterStat.index==0?'active item':'item'}"  th:each="ad,iterStat:${lbt}">
+						<div th:class="${iterStat.index==0?'active item':'item'}" th:each="ad,iterStat:${lbt}">
 							<a th:href="${ad.url}">
 								<img th:src="${ad.image}" />
 							</a>
 						</div>
-<!--						<div class="item">-->
-<!--							<a href="http://baidu2.wypxj.com/">-->
-<!--								<img src="./img/banner2.jpg" />-->
-<!--							</a>-->
-<!--						</div>-->
-<!--						<div class="item">-->
-<!--							<a href="http://baidu2.wypxj.com/">-->
-<!--								<img src="./img/banner3.jpg" />-->
-<!--							</a>-->
-<!--						</div>-->
 					</div>
 					<a href="#myCarousel" data-slide="prev" class="carousel-control left">‹</a>
 					<a href="#myCarousel" data-slide="next" class="carousel-control right">›</a>
