@@ -32,4 +32,8 @@ public interface UserService {
 
     public void delete(String username);
 
+    //短信验证码
+    public void sendSms(String phone);
+
+    public void add(User user,String smsCode);
 }

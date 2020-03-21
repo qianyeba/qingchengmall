@@ -1,16 +1,20 @@
 package com.qingcheng.service.impl;
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSON;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.qingcheng.dao.UserMapper;
 import com.qingcheng.entity.PageResult;
 import com.qingcheng.pojo.user.User;
 import com.qingcheng.service.user.UserService;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.List;
-import java.util.Map;
+import java.sql.Time;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -93,6 +97,58 @@ public class UserServiceImpl implements UserService {
      */
     public void delete(String username) {
         userMapper.deleteByPrimaryKey(username);
+    }
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    public void sendSms(String phone) {
+        //1.生成一个6位短信验证码
+        Random random = new Random();
+        int code = random.nextInt(999999);
+        if (code<100000){
+            code=code+100000;
+        }
+
+//        2.将验证码保存到Redis里
+        redisTemplate.boundValueOps("code_"+phone).set(code+"");
+        redisTemplate.boundValueOps("code_"+phone).expire(5, TimeUnit.MINUTES);//5分钟
+
+//        3.将验证码发送到MQ
+        Map<String,String> map = new HashMap<String,String>();
+        map.put("phone",phone);
+        map.put("code",code+"");
+        rabbitTemplate.convertAndSend("","queue.sms", JSON.toJSONString(map));
+
+    }
+
+    public void add(User user, String smsCode) {
+//        1.校验
+        String sysCode = (String) redisTemplate.boundValueOps("code_" + user.getPhone()).get();
+        if (sysCode==null){
+            throw new RuntimeException("验证码未发送或过期");
+        }
+        if (!sysCode.equals(smsCode)){
+            throw new RuntimeException("验证码不正确");
+        }
+        if(user.getUsername()==null){
+            user.setUsername(user.getPhone());
+        }
+        User user1=new User();
+        user1.setUsername(user.getUsername());
+        if (userMapper.selectCount(user1)>0){
+            throw new RuntimeException("该手机号已注册");
+        }
+//        2.添加
+        user.setCreated(new Date());
+        user.setUpdated(new Date());
+        user.setPoints(0);
+        user.setStatus("1");
+        user.setIsEmailCheck("0");
+        user.setIsMobileCheck("1");
+        userMapper.insert(user);
     }
 
     /**
