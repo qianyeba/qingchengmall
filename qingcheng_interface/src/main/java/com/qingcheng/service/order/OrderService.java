@@ -25,11 +25,9 @@ public interface OrderService {
 
     public Order findById(String id);
 
-    public void add(Order order);
-
+    public Map<String,Object> add(Order order);
 
     public void update(Order order);
-
 
     public void delete(String id);
 
@@ -38,4 +36,5 @@ public interface OrderService {
     public void batchSend(List<Order> orders);
 
     public void orderTimeOutLogic();
+
 }

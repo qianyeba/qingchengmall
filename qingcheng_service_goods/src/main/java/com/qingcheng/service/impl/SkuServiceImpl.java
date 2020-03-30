@@ -5,10 +5,12 @@ import com.github.pagehelper.PageHelper;
 import com.qingcheng.dao.SkuMapper;
 import com.qingcheng.entity.PageResult;
 import com.qingcheng.pojo.goods.Sku;
+import com.qingcheng.pojo.order.OrderItem;
 import com.qingcheng.service.goods.SkuService;
 import com.qingcheng.util.CacheKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.List;
@@ -124,6 +126,36 @@ public class SkuServiceImpl implements SkuService {
 
     public void deletePriceFromRedis(String id) {
         redisTemplate.boundHashOps(CacheKey.SKU_PRICE).delete(id);
+    }
+
+    @Transactional
+    public boolean deductionStock(List<OrderItem> orderItems) {
+        //检查是否可以扣减库存
+        boolean idDeduction=true;//是否可以扣减
+        for (OrderItem orderItem:orderItems){
+            Sku sku = findById(orderItem.getSkuId());
+            if (sku==null){
+                idDeduction=false;
+                break;
+            }
+            if ("1".equals(sku.getStatus())){
+                idDeduction=false;
+                break;
+            }
+            if ( sku.getNum().intValue()<orderItem.getNum().intValue() ){
+                idDeduction=false;
+                break;
+            }
+
+        }
+        //执行扣减
+        if(idDeduction){
+            for(OrderItem orderItem:orderItems){
+                skuMapper.deductionStock(  orderItem.getSkuId(),orderItem.getNum());//扣减库存
+                skuMapper.addSaleNum(orderItem.getSkuId(),orderItem.getNum());//增加销量
+            }
+        }
+        return idDeduction;
     }
 
 

@@ -1,6 +1,7 @@
 package com.qingcheng.service.goods;
 import com.qingcheng.entity.PageResult;
 import com.qingcheng.pojo.goods.Sku;
+import com.qingcheng.pojo.order.OrderItem;
 
 import java.util.*;
 
@@ -37,4 +38,6 @@ public interface SkuService {
     public void savePriceToRedisById(String id,Integer price);
 
     public void deletePriceFromRedis(String id);
+
+    public boolean deductionStock(List<OrderItem> orderItems);
 }

@@ -1924,16 +1924,16 @@
 							<div class="fl title">
 								<div class="control-group">
 									<div class="controls">
-										<input autocomplete="off" type="text" value="1" minnum="1" class="itxt" />
-										<a href="javascript:void(0)" class="increment plus">+</a>
-										<a href="javascript:void(0)" class="increment mins">-</a>
+										<input autocomplete="off"  v-model="num"  minnum="1" class="itxt" />
+										<a @click="addNum(1)" class="increment plus">+</a>
+										<a @click="addNum(-1)" class="increment mins">-</a>
 									</div>
 								</div>
 							</div>
 							<div class="fl">
 								<ul class="btn-choose unstyled">
 									<li>
-										<a href="cart.html" target="_blank" class="sui-btn  btn-danger addshopcar">加入购物车</a>
+										<a @click="toCartList()"  class="sui-btn  btn-danger addshopcar">加入购物车</a>
 									</li>
 								</ul>
 							</div>
@@ -2772,24 +2772,43 @@
 	<script type="text/javascript" src="./js/plugins/jquery.jqzoom/jquery.jqzoom.js"></script>
 	<script type="text/javascript" src="./js/plugins/jquery.jqzoom/zoom.js"></script>
 </body>
+<script src="js/vue.js"></script>
+<script src="js/axios.js"></script>
+<script th:inline="javascript">
 
-<script src="/js/vue.js"></script>
-<script src="/js/axios.js"></script>
-<script>
 	new Vue({
 		el:'#app',
 		data(){
-			return{
-				skuId:/*[[${sku.id}]]*/,
-				price:0
+		    return {
+		        skuId:/*[[${sku.id}]]*/,
+				price:0,
+				num:1
 			}
 		},
-		create(){
-			//读取价格
+		created(){
+		    //读取价格
 			axios.get('http://localhost:9102/sku/price.do?id='+this.skuId).then(response=>{
-				this.price=(response.data/100).toFixed(2);
+			    this.price=(response.data/100).toFixed(2);
 			})
+		},
+		methods:{
+		    addNum(num){
+		        this.num=this.num+num;
+		        if(this.num<=0){
+		            this.num=1;
+				}
+			},
+            toCartList(){
+		        //添加商品到购物车
+		        location.href=`http://localhost:9102/cart/buy.do?skuId=${this.skuId}&num=${this.num}`;
+			}
+
 		}
-	})
+
+	});
+
+
 </script>
+
+
 </html>

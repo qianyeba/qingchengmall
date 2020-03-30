@@ -9,6 +9,7 @@ import com.qingcheng.service.order.PreferentialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +94,36 @@ public class PreferentialServiceImpl implements PreferentialService {
      */
     public void delete(Integer id) {
         preferentialMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public int findPreMoneyByCategoryId(Integer categoryId, int money) {
+        //指定查询条件在优惠规则计算表中查询
+        //查询条件： 状态1 分类： 消费额 开始时间和截止时间 排序： 消费额降序
+        Example example = new Example(Preferential.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("state",1);
+        criteria.andEqualTo("categoryId",1);
+        criteria.andLessThanOrEqualTo("buyMoney",money);//消费额
+        criteria.andGreaterThanOrEqualTo("endTime",new Date());//截至日期大于等于当前日期
+        criteria.andLessThanOrEqualTo("startTime",new Date());// 开始日期小于等于当前日期
+        example.setOrderByClause("buy_money desc");//按购买金额降序排序
+
+        List<Preferential> preferentials = preferentialMapper.selectByExample(example);
+
+        if(preferentials.size()>=1){//有优惠
+            Preferential preferential = preferentials.get(0);
+            if("1".equals(preferential.getType())){ //如果不翻倍
+                return preferential.getPreMoney();
+            }else{
+                //计算倍数
+                int multiple = money / preferential.getBuyMoney();
+                return preferential.getPreMoney()*multiple;
+            }
+        }else{//没有优惠
+            return 0;
+        }
+
     }
 
     /**

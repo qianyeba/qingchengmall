@@ -32,4 +32,6 @@ public interface PreferentialService {
 
     public void delete(Integer id);
 
+    public int findPreMoneyByCategoryId(Integer categoryId,int money);
+
 }
