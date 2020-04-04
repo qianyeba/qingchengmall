@@ -9,6 +9,15 @@ public class Result implements Serializable {
 
     private int code;//返回的业务码  0：成功执行  1：发生错误
     private String message;//信息
+    private Object other;
+
+    public Object getOther() {
+        return other;
+    }
+
+    public void setOther(Object other) {
+        this.other = other;
+    }
 
     public Result(int code, String message) {
         this.code = code;

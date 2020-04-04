@@ -16,6 +16,7 @@ import com.qingcheng.service.order.OrderService;
 import com.qingcheng.util.IdWorker;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
 import java.time.LocalDateTime;
@@ -243,6 +244,34 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderStatus("4");
             order.setCloseTime(new Date());//关闭日期
             orderMapper.updateByPrimaryKeySelective(order);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updatePayStatus(String orderId, String transactionId) {
+        System.out.println("调用修改订单状态");
+        Order order = orderMapper.selectByPrimaryKey(orderId);
+        if(order!=null && "0".equals( order.getPayStatus() )){
+            //修改订单状态等信息
+            order.setPayStatus("1");//支付状态
+            order.setOrderStatus("1");//订单状态
+            order.setUpdateTime(new Date());//修改日期
+            order.setPayTime(new Date());//支付日期
+            order.setTransactionId(transactionId);//交易流水号
+            orderMapper.updateByPrimaryKeySelective(order);//修改
+
+            //记录订单日志
+            OrderLog orderLog=new OrderLog();
+            orderLog.setId( idWorker.nextId()+"" );
+            orderLog.setOperater("system");//系统
+            orderLog.setOperateTime(new Date());//操作时间
+            orderLog.setOrderStatus("1");//订单状态
+            orderLog.setPayStatus("1");//支付状态
+            orderLog.setRemarks("支付流水号："+transactionId);//备注
+            orderLog.setOrderId(Long.valueOf(orderId));
+            orderLogMapper.insert(orderLog);
+
         }
     }
 
